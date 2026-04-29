@@ -1,0 +1,8 @@
+package org.example.dto;
+
+
+
+public record UserResponseDTO(Long id,
+                              String username,
+                              String email) {
+}
