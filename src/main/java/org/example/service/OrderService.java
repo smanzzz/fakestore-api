@@ -57,4 +57,12 @@ public class OrderService {
         return orderMapper.fromEntity(savedOrder);
     }
 
+
+    public OrderResponseDTO getOrderById(String username, Long orderId){
+
+
+        return ;
+    }
+
+
 }

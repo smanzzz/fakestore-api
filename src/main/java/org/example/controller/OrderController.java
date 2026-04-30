@@ -7,10 +7,7 @@ import org.example.service.OrderService;
 import org.example.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/orders")
@@ -24,12 +21,20 @@ public class OrderController {
 
     }
 
-
-
     @PostMapping("/create")
     public ResponseEntity<OrderResponseDTO> createOrder (@AuthenticationPrincipal String username, @RequestBody OrderRequestDTO requestDTO){
       OrderResponseDTO respDTO =   orderService.createOrder(username, requestDTO);
 
                 return ResponseEntity.ok(respDTO);
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<OrderResponseDTO> getOrderById(@AuthenticationPrincipal String username, @RequestBody @PathVariable Long orderId){
+
+        OrderResponseDTO respDTO = orderService.getOrderById(username, orderId);
+
+        return ResponseEntity.ok(respDTO);
+    }
+
+
 }
