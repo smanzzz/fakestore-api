@@ -58,10 +58,16 @@ public class OrderService {
     }
 
 
-    public OrderResponseDTO getOrderById(String username, Long orderId){
+    public OrderResponseDTO getOrderById(String username, Long id){
 
+        if (!userRepository.existsByUsername(username)){
+            throw new IllegalArgumentException("Användare med det användarnamn existerar inte");
+        }
 
-        return ;
+         Order order = orderRepository.findById(id)
+                 .orElseThrow(()-> new IllegalArgumentException("Order med det order id existerar ej"));
+
+        return orderMapper.fromEntity(order);
     }
 
 

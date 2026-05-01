@@ -29,12 +29,11 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<OrderResponseDTO> getOrderById(@AuthenticationPrincipal String username, @RequestBody @PathVariable Long orderId){
+    public ResponseEntity<OrderResponseDTO> getOrderById(@AuthenticationPrincipal String username, @PathVariable Long id){
 
-        OrderResponseDTO respDTO = orderService.getOrderById(username, orderId);
+        OrderResponseDTO respDTO = orderService.getOrderById(username, id);
 
         return ResponseEntity.ok(respDTO);
     }
-
 
 }

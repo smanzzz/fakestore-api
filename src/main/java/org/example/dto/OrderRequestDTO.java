@@ -7,7 +7,7 @@ import org.example.model.User;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public record OrderRequestDTO(Long userId,
+public record OrderRequestDTO(
                               List<OrderItemDTO> orderItemList
                               ) {
 }
