@@ -21,8 +21,9 @@ public class Order {
     @ManyToOne
     private User user;
 
-    @OneToMany(mappedBy = "orders")
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> orderItems;
+
 
     private LocalDateTime createdAt;
 }
