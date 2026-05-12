@@ -32,6 +32,21 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
     "developmentOnly"("org.springframework.boot:spring-boot-devtools")
+
+
+        testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
+        testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+
+    tasks.named<Test>("test") {
+        useJUnitPlatform()
+
+        maxHeapSize = "1G"
+
+        testLogging {
+            events("passed")
+        }
+    }
 }
 
 tasks.test {

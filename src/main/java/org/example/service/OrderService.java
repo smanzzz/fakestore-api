@@ -1,6 +1,5 @@
 package org.example.service;
 
-import org.example.dto.OrderItemDTO;
 import org.example.dto.OrderRequestDTO;
 import org.example.dto.OrderResponseDTO;
 import org.example.mapper.OrderMapper;
@@ -31,12 +30,17 @@ public class OrderService {
 
     public OrderResponseDTO createOrder(String username, OrderRequestDTO requestDTO){
 
+        //instansiera ett tomt objekt av order
         Order order = new Order();
 
+        //Verifiera att user med inloggade username finns, annars kasta ett fel.
         User user = userRepository.findByUsername(username)
                 .orElseThrow(()-> new IllegalArgumentException("Användare med det användarnamn existerar inte"));
 
+        //sätt user på order objektet.
         order.setUser(user);
+
+        //skicka över listan från requesten till
 
         List<OrderItem> orderItemList = requestDTO.orderItemList()
                 .stream()
@@ -49,11 +53,15 @@ public class OrderService {
                         })
                 .toList();
 
+        //sen sätter vi den nya listan på orderns listfält
+        //samt sätter tiden till nu när vi skapar ordern.
         order.setOrderItems(orderItemList);
         order.setCreatedAt(LocalDateTime.now());
 
+        //spara order till databas
         Order savedOrder =  orderRepository.save(order);
 
+        //returnera order och mappa om till dto
         return orderMapper.fromEntity(savedOrder);
     }
 
