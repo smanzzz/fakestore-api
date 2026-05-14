@@ -1,11 +1,11 @@
 package org.example.model;
 
 
-/*import jakarta.persistence.*;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.math.BigInteger;
+import java.math.BigDecimal;
 
 @Entity
 @Getter
@@ -20,7 +20,7 @@ public class Product {
     private String title;
 
     @Column
-    private BigInteger price;
+    private BigDecimal price;
 
     @Column
     private String description;
@@ -33,4 +33,3 @@ public class Product {
 
 
 }
-*/
