@@ -21,62 +21,51 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
-    public UserService(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder, JwtService jwtService ){
-
-        this.userRepository=userRepository;
-        this.userMapper=userMapper;
-        this.passwordEncoder=passwordEncoder;
-        this.jwtService=jwtService;
-
+    public UserService(
+            UserRepository userRepository,
+            UserMapper userMapper,
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService) {
+        this.userRepository = userRepository;
+        this.userMapper = userMapper;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     public List<UserResponseDTO> findAllUsers() {
-        List<User> usersList = userRepository.findAll();
-
-       return usersList
-               .stream()
-               .map(userMapper::toDTO)
-                         .toList();
-
+        return userRepository.findAll()
+                .stream()
+                .map(userMapper::toDTO)
+                .toList();
     }
 
     public UserResponseDTO createUser(UserRequestCreateDTO reqDTO) {
-
         if (userRepository.existsByUsername(reqDTO.username())) {
             throw new IllegalArgumentException("Det användarnamnet är upptaget.");
-
         }
-        if (userRepository.
-                existsByEmail(reqDTO.email())) {
 
-            throw new IllegalArgumentException("Det Emailet är redan i bruk.");
+        if (userRepository.existsByEmail(reqDTO.email())) {
+            throw new IllegalArgumentException("Den e-postadressen är redan i bruk.");
         }
+
         User newUser = userMapper.fromDTO(reqDTO);
         newUser.setPassword(passwordEncoder.encode(reqDTO.password()));
-        User savedUser = userRepository.save(newUser);
 
-        return  userMapper.toDTO(savedUser);
-
+        return userMapper.toDTO(userRepository.save(newUser));
     }
 
     public String loginUser(UserRequestLoginDTO requestLoginDTO) {
-
         Optional<User> userLoggingIn = userRepository.findByUsername(requestLoginDTO.username());
 
-        if (userLoggingIn.isEmpty()){
-
+        if (userLoggingIn.isEmpty()) {
             throw new IllegalArgumentException("Fel användarnamn eller lösenord.");
         }
 
-        if (!passwordEncoder.matches(requestLoginDTO.password(), userLoggingIn.get().getPassword())){
+        User user = userLoggingIn.get();
+        if (!passwordEncoder.matches(requestLoginDTO.password(), user.getPassword())) {
             throw new IllegalArgumentException("Fel användarnamn eller lösenord.");
         }
 
-       return jwtService.generateToken(userLoggingIn.get().getUsername());
-
-
+        return jwtService.generateToken(user.getUsername());
     }
- //steg 1 ta emot requesten. Steg 2 kollar ifall de matchar username finns. Steg 3 om den finns kolla ifall lösen matchar.
-    //Steg 4 ifall den inte matchar kasta fel och informera om.
-    //stef 5 returnera en UserresponseDTO
 }

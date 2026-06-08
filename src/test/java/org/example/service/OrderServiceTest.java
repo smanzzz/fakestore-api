@@ -9,9 +9,9 @@ import org.example.model.OrderItem;
 import org.example.model.User;
 import org.example.repository.OrderRepository;
 import org.example.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -20,96 +20,120 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class OrderServiceTest {
+class OrderServiceTest {
 
     @Mock
-    UserRepository userRepository;
+    private UserRepository userRepository;
+
     @Mock
-    OrderRepository orderRepository;
+    private OrderRepository orderRepository;
+
     @Mock
-    OrderMapper orderMapper;
+    private OrderMapper orderMapper;
 
     @InjectMocks
-    OrderService orderService;
+    private OrderService orderService;
 
+    private User user;
+    private OrderRequestDTO orderRequestDTO;
+    private Order order;
+    private OrderResponseDTO orderResponseDTO;
 
-    @Test
-    void shouldCreateOrder(){
-        //Arrange
-        OrderItemDTO orderItemDTO = new OrderItemDTO(
-                1L,
-                10);
-
-        List<OrderItemDTO> orderItems = List.of(orderItemDTO);
-        OrderRequestDTO requestDTO = new OrderRequestDTO(orderItems);
-
-        User user = new User();
+    @BeforeEach
+    void setUp() {
+        user = new User();
         user.setId(1L);
-        user.setUsername("Kalle");
+        user.setUsername("customer");
 
-        LocalDateTime createdAt = LocalDateTime.now();
-        OrderResponseDTO expectedResponseDTO=  new OrderResponseDTO(
-                1L,
-                1L,
-                orderItems,
-                createdAt);
+        OrderItemDTO itemDTO = new OrderItemDTO(100L, 2);
+        orderRequestDTO = new OrderRequestDTO(List.of(itemDTO));
 
-        when(userRepository.findByUsername(user.getUsername())).thenReturn(Optional.of(user));
-        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(orderMapper.fromEntity(any(Order.class))).thenReturn(expectedResponseDTO);
-        //Act
-        OrderResponseDTO resultRespDTO = orderService.createOrder(user.getUsername(),requestDTO);
-        //Assert
-        assertEquals(expectedResponseDTO,resultRespDTO);
-        ArgumentCaptor<Order> orderCaptor = ArgumentCaptor.forClass(Order.class);
+        order = new Order();
+        order.setId(1L);
+        order.setUser(user);
 
-        verify(orderRepository).save(orderCaptor.capture());
-        Order capturedOrder = orderCaptor.getValue();
-        verify(userRepository).findByUsername(user.getUsername());
-        verify(orderMapper).fromEntity(capturedOrder);
+        OrderItem orderItem = new OrderItem();
+        orderItem.setId(1L);
+        orderItem.setProductId(100L);
+        orderItem.setAmountOfProduct(2);
+        orderItem.setOrder(order);
 
-        assertSame(user, capturedOrder.getUser());
-        assertNotNull(capturedOrder.getCreatedAt());
+        order.setOrderItems(List.of(orderItem));
+        order.setCreatedAt(LocalDateTime.now());
 
-        assertEquals(1,capturedOrder.getOrderItems().size());
-
-        OrderItem capturedOrderItem = capturedOrder.getOrderItems().getFirst();
-
-        assertEquals(1L, capturedOrderItem.getProductId());
-        assertEquals(10, capturedOrderItem.getAmountOfProduct());
-        assertSame(capturedOrder, capturedOrderItem.getOrder());
+        orderResponseDTO = new OrderResponseDTO(1L, 1L, List.of(), LocalDateTime.now());
     }
-
-
 
     @Test
-    void shouldThrowIllegalArgumentException(){
-        //Arrange
-        OrderItemDTO orderItemDTO = new OrderItemDTO(
-                1L,
-                10);
+    void createOrder_Success() {
+        when(userRepository.findByUsername("customer")).thenReturn(Optional.of(user));
+        when(orderRepository.save(any(Order.class))).thenReturn(order);
+        when(orderMapper.fromEntity(order)).thenReturn(orderResponseDTO);
 
-        List<OrderItemDTO> orderItems = List.of(orderItemDTO);
+        OrderResponseDTO result = orderService.createOrder("customer", orderRequestDTO);
 
-        OrderRequestDTO orderRequestDTO = new OrderRequestDTO(orderItems);
-
-        User user = new User();
-        user.setUsername("Kalle");
-
-        when(userRepository.findByUsername(user.getUsername())).thenReturn(Optional.empty());
-        //Act
-        //Assert
-        assertThrows(IllegalArgumentException.class,
-                () -> {
-                    orderService.createOrder(user.getUsername(),orderRequestDTO);
-                });
+        assertNotNull(result);
+        assertEquals(1L, result.id());
+        assertEquals(1L, result.userId());
+        verify(userRepository, times(1)).findByUsername("customer");
+        verify(orderRepository, times(1)).save(any(Order.class));
     }
 
+    @Test
+    void createOrder_ThrowsExceptionWhenUserNotFound() {
+        when(userRepository.findByUsername("unknown")).thenReturn(Optional.empty());
 
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> orderService.createOrder("unknown", orderRequestDTO));
+
+        assertEquals("Användaren finns inte.", exception.getMessage());
+        verify(orderRepository, never()).save(any(Order.class));
+    }
+
+    @Test
+    void getOrderById_Success() {
+        when(userRepository.existsByUsername("customer")).thenReturn(true);
+        when(orderRepository.findByIdAndUserUsername(1L, "customer")).thenReturn(Optional.of(order));
+        when(orderMapper.fromEntity(order)).thenReturn(orderResponseDTO);
+
+        OrderResponseDTO result = orderService.getOrderById("customer", 1L);
+
+        assertNotNull(result);
+        assertEquals(1L, result.id());
+        verify(orderRepository, times(1)).findByIdAndUserUsername(1L, "customer");
+    }
+
+    @Test
+    void getOrderById_ThrowsExceptionWhenUserNotFound() {
+        when(userRepository.existsByUsername("unknown")).thenReturn(false);
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> orderService.getOrderById("unknown", 1L));
+
+        assertEquals("Användaren finns inte.", exception.getMessage());
+    }
+
+    @Test
+    void getOrderById_ThrowsExceptionWhenOrderNotFound() {
+        when(userRepository.existsByUsername("customer")).thenReturn(true);
+        when(orderRepository.findByIdAndUserUsername(1L, "customer")).thenReturn(Optional.empty());
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> orderService.getOrderById("customer", 1L));
+
+        assertEquals("Ordern finns inte.", exception.getMessage());
+    }
 }

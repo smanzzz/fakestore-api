@@ -1,6 +1,5 @@
 package org.example;
 
-
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 
@@ -14,10 +13,9 @@ import java.lang.annotation.Target;
 @Constraint(validatedBy = StrongPasswordValidator.class)
 public @interface StrongPassword {
 
-    String message() default
-            "Lösenord måste innehålla åtminstone 1 stor bokstav, en liten och en siffra.";
+    String message() default "Lösenordet måste innehålla minst en stor bokstav, en liten bokstav och en siffra.";
 
-    Class<?>[] groups()default  {};
+    Class<?>[] groups() default {};
 
-    Class<?extends Payload>[] payload()default {};
+    Class<? extends Payload>[] payload() default {};
 }

@@ -5,19 +5,12 @@ import jakarta.validation.ConstraintValidatorContext;
 
 public class StrongPasswordValidator implements ConstraintValidator<StrongPassword, String> {
 
-
     @Override
-    public void initialize(StrongPassword constraintAnnotation){
-        ConstraintValidator.super.initialize(constraintAnnotation);
-
-    }
-
-    @Override
-    public boolean isValid (String s, ConstraintValidatorContext constraintValidatorContext){
-
-        if(s==null){
+    public boolean isValid(String value, ConstraintValidatorContext context) {
+        if (value == null) {
             return false;
         }
-        return s.matches("(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9]).*");
+
+        return value.matches("(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9]).*");
     }
 }

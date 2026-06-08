@@ -1,13 +1,14 @@
 package org.example.dto;
 
 
-import org.example.model.OrderItem;
-import org.example.model.User;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 public record OrderRequestDTO(
+                              @NotEmpty(message = "Ordern måste innehålla minst en produkt.")
+                              @Valid
                               List<OrderItemDTO> orderItemList
                               ) {
 }

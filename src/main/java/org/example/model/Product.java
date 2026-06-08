@@ -22,10 +22,10 @@ public class Product {
     @Column
     private BigDecimal price;
 
-    @Column
+    @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column
+    @Column(columnDefinition = "TEXT")
     private String image;
 
     @Column

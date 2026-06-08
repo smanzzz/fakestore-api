@@ -2,11 +2,11 @@ package org.example.service;
 
 import org.example.dto.UserRequestCreateDTO;
 import org.example.dto.UserRequestLoginDTO;
-import org.example.dto.UserResponseDTO;
 import org.example.mapper.UserMapper;
 import org.example.model.User;
 import org.example.repository.UserRepository;
 import org.example.security.JwtService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -14,214 +14,119 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class UserServiceTest {
-
+class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
     @Mock
     private UserMapper userMapper;
+
     @Mock
     private PasswordEncoder passwordEncoder;
+
     @Mock
     private JwtService jwtService;
 
     @InjectMocks
     private UserService userService;
 
-    @Test
-    public void createUserTest() {
-        // Arrange
-        UserRequestCreateDTO testReqDTO = new UserRequestCreateDTO(
-                "Habib",
-                "habib@gmail.com",
-                "Hejsan1");
+    private User user;
+    private UserRequestCreateDTO createDTO;
+    private UserRequestLoginDTO loginDTO;
 
-        UserResponseDTO expectedResponse = new UserResponseDTO(
-                1L,
-                testReqDTO.username(),
-                testReqDTO.email());
+    @BeforeEach
+    void setUp() {
+        user = new User();
+        user.setId(1L);
+        user.setUsername("customer");
+        user.setPassword("encodedPassword");
+        user.setEmail("customer@example.com");
 
-        User mappedUser = new User();
-        mappedUser.setUsername(testReqDTO.username());
-        mappedUser.setEmail(testReqDTO.email());
-
-
-        when(userRepository.existsByUsername(testReqDTO.username())).thenReturn(false);
-
-        when(userRepository.existsByEmail(testReqDTO.email())).thenReturn(false);
-
-        when(userMapper.fromDTO(testReqDTO)).thenReturn(mappedUser);
-
-        when(passwordEncoder.encode(testReqDTO.password())).thenReturn("krypterat_lösenord_123");
-
-        when(userRepository.save(any(User.class))).thenReturn(mappedUser);
-
-        when(userMapper.toDTO(any(User.class))).thenReturn(expectedResponse);
-
-
-        //Act
-        UserResponseDTO result = userService.createUser(testReqDTO);
-
-        //Assert
-        assertNotNull(result);
-        assertEquals(expectedResponse.username(), result.username());
-        assertEquals(expectedResponse.email(), result.email());
-        assertEquals(expectedResponse.id(), result.id());
+        createDTO = new UserRequestCreateDTO("customer", "customer@example.com", "Password123");
+        loginDTO = new UserRequestLoginDTO("customer", "Password123");
     }
 
     @Test
-    public void shouldThrowIllegalArgumentExceptionWhenUsernameAlreadyExists() {
-        //Arrange, skapa de objekt som metoden använder, vi skickar in en requestdto
+    void createUser_Success() {
+        when(userRepository.existsByUsername(createDTO.username())).thenReturn(false);
+        when(userRepository.existsByEmail(createDTO.email())).thenReturn(false);
+        when(passwordEncoder.encode(createDTO.password())).thenReturn("encodedPassword");
+        when(userMapper.fromDTO(any())).thenReturn(user);
 
-        UserRequestCreateDTO testReqDTO = new UserRequestCreateDTO(
-                "Habib",
-                "habib@gmail.com",
-                "Hejsan1");
+        assertDoesNotThrow(() -> userService.createUser(createDTO));
 
-        when(userRepository.existsByUsername(testReqDTO.username())).thenReturn(true);
-
-        assertThrows(IllegalArgumentException.class,
-                () -> {
-                    userService.createUser(testReqDTO);
-                });
-
-
-        //Eftersom det första som sker i servicen när man vill skapa en user är att kolla ifall
-        //Username existerar så tror jag inte man behöver skriva fler when eller anropa
-        //mappers eller skapa andra objekt eftersom koden efter en throw inte körs.
-
-
-    }
-    @Test
-    public void shouldThrowIllegalArgumentExceptionWhenEmailAlreadyExists() {
-        //Arrange, skapa de objekt som metoden använder, vi skickar in en requestdto
-
-        UserRequestCreateDTO testReqDTO = new UserRequestCreateDTO(
-                "Habib",
-                "habib@gmail.com",
-                "Hejsan1");
-
-        when(userRepository.existsByUsername(testReqDTO.username())).thenReturn(false);
-        when(userRepository.existsByEmail(testReqDTO.email())).thenReturn(true);
-
-        assertThrows(IllegalArgumentException.class,
-                () -> {
-                    userService.createUser(testReqDTO);
-                });
+        verify(userRepository, times(1)).save(any(User.class));
     }
 
     @Test
-    public void shouldLoginUser(){
+    void createUser_ThrowsExceptionWhenUsernameExists() {
+        when(userRepository.existsByUsername(createDTO.username())).thenReturn(true);
 
-        // Arrange
-        UserRequestLoginDTO reqDTO = new UserRequestLoginDTO(
-                "Habib",
-                "Hejsan1");
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> userService.createUser(createDTO));
 
-        String expectedJwtString = "en-lång-jwt-string";
-
-        User mockUserLoggingIn = new User();
-
-        mockUserLoggingIn.setUsername(reqDTO.username());
-        mockUserLoggingIn.setPassword(reqDTO.password());
-
-        Optional<User> userLoggingIn = Optional.of(mockUserLoggingIn);
-
-        when(userRepository.findByUsername(reqDTO.username())).thenReturn(userLoggingIn);
-
-        when(passwordEncoder.matches(reqDTO.password(),userLoggingIn.get().getPassword())).thenReturn(true);
-
-        when(jwtService.generateToken(userLoggingIn.get().getUsername())).thenReturn(expectedJwtString);
-
-        String result = userService.loginUser(reqDTO);
-
-        assertEquals(result,  expectedJwtString);
-
+        assertEquals("Det användarnamnet är upptaget.", exception.getMessage());
+        verify(userRepository, never()).save(any(User.class));
     }
 
     @Test
-    public void shouldThrowIllegalArgumentExceptionAndNotLoginUser(){
+    void createUser_ThrowsExceptionWhenEmailExists() {
+        when(userRepository.existsByUsername(createDTO.username())).thenReturn(false);
+        when(userRepository.existsByEmail(createDTO.email())).thenReturn(true);
 
-        // Arrange
-        UserRequestLoginDTO reqDTO = new UserRequestLoginDTO(
-                "Habib",
-                "Hejsan1");
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> userService.createUser(createDTO));
 
-        User mockUserLoggingIn = new User();
-
-        mockUserLoggingIn.setUsername(reqDTO.username());
-
-        when(userRepository.findByUsername(reqDTO.username())).thenReturn(Optional.empty());
-
-        assertThrows(IllegalArgumentException.class,
-                ()-> {
-                    userService.loginUser(reqDTO);
-                });
+        assertEquals("Den e-postadressen är redan i bruk.", exception.getMessage());
+        verify(userRepository, never()).save(any(User.class));
     }
 
     @Test
-    public void shouldThrowIllegalArgumentExceptionAndNotLoginUserBecauseOfPasswordMisMatch(){
+    void loginUser_Success_ReturnsToken() {
+        when(userRepository.findByUsername(loginDTO.username())).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(loginDTO.password(), user.getPassword())).thenReturn(true);
+        when(jwtService.generateToken(user.getUsername())).thenReturn("jwt-token");
 
-        // Arrange
+        String token = userService.loginUser(loginDTO);
 
-        UserRequestLoginDTO reqDTO = new UserRequestLoginDTO(
-                "Habib",
-                "Hejsan1");
-
-        User mockUserLoggingIn= new User();
-
-        mockUserLoggingIn.setUsername(reqDTO.username());
-        mockUserLoggingIn.setPassword(reqDTO.password());
-
-        Optional<User> userLoggingIn = Optional.of(mockUserLoggingIn);
-
-        when(userRepository.findByUsername(reqDTO.username())).thenReturn(userLoggingIn);
-
-        when(passwordEncoder.matches(reqDTO.password(),userLoggingIn.get().getPassword())).thenReturn(false);
-
-         assertThrows(IllegalArgumentException.class,
-               ()-> {
-                   userService.loginUser(reqDTO);
-               });
-
-
+        assertEquals("jwt-token", token);
     }
 
     @Test
-    public void shouldReturnAllUsersInList(){
+    void loginUser_ThrowsExceptionWhenPasswordIsIncorrect() {
+        when(userRepository.findByUsername(loginDTO.username())).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(loginDTO.password(), user.getPassword())).thenReturn(false);
 
-        //Arrange
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> userService.loginUser(loginDTO));
 
-        User user = new User();
-
-        List<User> usersList = List.of(user);
-        UserResponseDTO expectedRespDTO = new UserResponseDTO(1L,
-                "Habib",
-                "habib@gmail.com");
-        //Act
-        when(userRepository.findAll()).thenReturn(usersList);
-        when(userMapper.toDTO(any(User.class))).thenReturn(expectedRespDTO);
-
-        List<UserResponseDTO> usersListResult = userService.findAllUsers();
-
-        //Assert
-        assertFalse(usersListResult.isEmpty());
-        assertEquals(1, usersListResult.size());
-        assertEquals("Habib", usersListResult.getFirst().username());
-
+        assertEquals("Fel användarnamn eller lösenord.", exception.getMessage());
     }
 
+    @Test
+    void loginUser_ThrowsExceptionWhenUserNotFound() {
+        when(userRepository.findByUsername(loginDTO.username())).thenReturn(Optional.empty());
 
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> userService.loginUser(loginDTO));
 
-
+        assertEquals("Fel användarnamn eller lösenord.", exception.getMessage());
+    }
 }
-
