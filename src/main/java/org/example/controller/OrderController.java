@@ -1,10 +1,9 @@
 package org.example.controller;
 
-import com.fasterxml.classmate.members.ResolvedParameterizedMember;
+import jakarta.validation.Valid;
 import org.example.dto.OrderRequestDTO;
 import org.example.dto.OrderResponseDTO;
 import org.example.service.OrderService;
-import org.example.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +21,7 @@ public class OrderController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<OrderResponseDTO> createOrder (@AuthenticationPrincipal String username, @RequestBody OrderRequestDTO requestDTO){
+    public ResponseEntity<OrderResponseDTO> createOrder (@AuthenticationPrincipal String username, @Valid @RequestBody OrderRequestDTO requestDTO){
       OrderResponseDTO respDTO =   orderService.createOrder(username, requestDTO);
 
                 return ResponseEntity.ok(respDTO);

@@ -5,7 +5,6 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
-import java.lang.reflect.Type;
 import java.util.List;
 
 @Component
@@ -13,24 +12,23 @@ public class FakeStoreProductClient {
 
     private final RestClient restClient;
 
-    public FakeStoreProductClient(){
-        this.restClient=RestClient.builder()
+    public FakeStoreProductClient() {
+        this.restClient = RestClient.builder()
                 .baseUrl("https://fakestoreapi.com")
                 .build();
     }
 
-    public List<FakeStoreProductResponseDTO> getAllProducts(){
-        return  restClient.get()
+    public List<FakeStoreProductResponseDTO> getAllProducts() {
+        return restClient.get()
                 .uri("/products")
                 .retrieve()
-                .body(new ParameterizedTypeReference<List<FakeStoreProductResponseDTO>>(){});
+                .body(new ParameterizedTypeReference<>() {});
     }
-    public FakeStoreProductResponseDTO getProductById(Long id){
+
+    public FakeStoreProductResponseDTO getProductById(Long id) {
         return restClient.get()
                 .uri("/products/{id}", id)
                 .retrieve()
                 .body(FakeStoreProductResponseDTO.class);
     }
-
-
 }

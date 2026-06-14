@@ -20,29 +20,21 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderMapper orderMapper;
 
-    public OrderService(UserRepository userRepository, OrderRepository orderRepository, OrderMapper orderMapper){
-        this.userRepository=userRepository;
-        this.orderRepository=orderRepository;
-        this.orderMapper=orderMapper;
-
+    public OrderService(UserRepository userRepository, OrderRepository orderRepository, OrderMapper orderMapper) {
+        this.userRepository = userRepository;
+        this.orderRepository = orderRepository;
+        this.orderMapper = orderMapper;
     }
 
-
-    public OrderResponseDTO createOrder(String username, OrderRequestDTO requestDTO){
-
-        //instansiera ett tomt objekt av order
-        Order order = new Order();
-
-        //Verifiera att user med inloggade username finns, annars kasta ett fel.
+    public OrderResponseDTO createOrder(String username, OrderRequestDTO requestDTO) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(()-> new IllegalArgumentException("Användare med det användarnamn existerar inte"));
+                .orElseThrow(() -> new IllegalArgumentException("Användaren finns inte."));
 
-        //sätt user på order objektet.
+        Order order = new Order();
         order.setUser(user);
+        order.setCreatedAt(LocalDateTime.now());
 
-        //skicka över listan från requesten till
-
-        List<OrderItem> orderItemList = requestDTO.orderItemList()
+        List<OrderItem> orderItems = requestDTO.orderItemList()
                 .stream()
                 .map(orderItemDTO -> {
                     OrderItem item = new OrderItem();
@@ -50,33 +42,22 @@ public class OrderService {
                     item.setAmountOfProduct(orderItemDTO.amountOfProduct());
                     item.setOrder(order);
                     return item;
-                        })
+                })
                 .toList();
 
-        //sen sätter vi den nya listan på orderns listfält
-        //samt sätter tiden till nu när vi skapar ordern.
-        order.setOrderItems(orderItemList);
-        order.setCreatedAt(LocalDateTime.now());
+        order.setOrderItems(orderItems);
 
-        //spara order till databas
-        Order savedOrder =  orderRepository.save(order);
-
-        //returnera order och mappa om till dto
-        return orderMapper.fromEntity(savedOrder);
+        return orderMapper.fromEntity(orderRepository.save(order));
     }
 
-
-    public OrderResponseDTO getOrderById(String username, Long id){
-
-        if (!userRepository.existsByUsername(username)){
-            throw new IllegalArgumentException("Användare med det användarnamn existerar inte");
+    public OrderResponseDTO getOrderById(String username, Long id) {
+        if (!userRepository.existsByUsername(username)) {
+            throw new IllegalArgumentException("Användaren finns inte.");
         }
 
-         Order order = orderRepository.findById(id)
-                 .orElseThrow(()-> new IllegalArgumentException("Order med det order id existerar ej"));
+        Order order = orderRepository.findByIdAndUserUsername(id, username)
+                .orElseThrow(() -> new IllegalArgumentException("Ordern finns inte."));
 
         return orderMapper.fromEntity(order);
     }
-
-
 }

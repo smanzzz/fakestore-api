@@ -1,5 +1,6 @@
 package org.example.controller;
 
+import jakarta.validation.Valid;
 import org.example.dto.UserRequestCreateDTO;
 import org.example.dto.UserRequestLoginDTO;
 import org.example.dto.UserResponseDTO;
@@ -31,14 +32,14 @@ public class UserController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<UserResponseDTO> createUser(@RequestBody UserRequestCreateDTO reqDTO){
+    public ResponseEntity<UserResponseDTO> createUser(@Valid @RequestBody UserRequestCreateDTO reqDTO){
         UserResponseDTO responseDTO = userService.createUser(reqDTO);
         return ResponseEntity.ok(responseDTO);
     }
 
 
     @PostMapping("/login")
-    public ResponseEntity<String> loginUser(@RequestBody UserRequestLoginDTO reqDTO){
+    public ResponseEntity<String> loginUser(@Valid @RequestBody UserRequestLoginDTO reqDTO){
       String jwtString = userService.loginUser(reqDTO);
 
         return ResponseEntity.ok(jwtString);

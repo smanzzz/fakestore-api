@@ -45,12 +45,18 @@ public class FakeStoreProductService {
 
     public void syncProducts() {
         List<FakeStoreProductResponseDTO> apiProducts = fakeStoreProductClient.getAllProducts();
+        if (apiProducts == null || apiProducts.isEmpty()) {
+            return;
+        }
 
         List<Product> products = apiProducts.stream()
+                .filter(product -> !productsRepository.existsByTitle(product.title()))
                 .map(productMapper::fromFakeStoreDTO)
                 .toList();
 
-        productsRepository.saveAll(products);
+        if (!products.isEmpty()) {
+            productsRepository.saveAll(products);
+        }
     }
 }
 
