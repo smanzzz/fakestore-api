@@ -13,6 +13,7 @@ import org.example.service.OrderService;
 import org.example.service.UserService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -116,7 +117,12 @@ public class ViewController {
         return "products";
     }
 
-    @GetMapping("/products/{id}")
+    @GetMapping("/favicon.ico")
+    public ResponseEntity<Void> favicon() {
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/products/{id:[0-9]+}")
     public String productDetail(@PathVariable Long id, Model model, HttpSession session) {
         model.addAttribute("product", productService.getProductById(id));
         model.addAttribute("cartCount", getCartCount(session));

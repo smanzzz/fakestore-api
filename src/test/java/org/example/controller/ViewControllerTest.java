@@ -87,6 +87,12 @@ class ViewControllerTest {
     }
 
     @Test
+    void favicon_ShouldReturnNoContent() throws Exception {
+        mockMvc.perform(get("/favicon.ico"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
     void productsPage_ShouldReturnProductsView() throws Exception {
         FakeStoreProductResponseDTO product = new FakeStoreProductResponseDTO(
                 1L,
