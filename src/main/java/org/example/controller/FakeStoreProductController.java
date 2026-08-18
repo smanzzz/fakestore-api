@@ -26,7 +26,7 @@ public class FakeStoreProductController {
         return ResponseEntity.ok(fakeStoreProductService.getAllProducts());
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{id:[0-9]+}")
     public ResponseEntity<FakeStoreProductResponseDTO> getProductById(@PathVariable Long id) {
         return ResponseEntity.ok(fakeStoreProductService.getProductById(id));
     }
